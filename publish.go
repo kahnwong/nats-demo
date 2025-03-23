@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -17,7 +19,10 @@ func publish(js jetstream.JetStream) {
 		wg.Add(iterations)
 		for range iterations {
 			go func() {
-				_, err := js.PublishAsync("events.sample_input", []byte("hello world"))
+				currentTime := time.Now()
+				payload := fmt.Sprintf("%s - %v", currentTime.Format("2006-01-02 15:04:05"), rand.Int())
+
+				_, err := js.PublishAsync("events.sample_input", []byte(payload))
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to publish async")
 				}
