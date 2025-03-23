@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/nats-io/nats.go/jetstream"
@@ -67,44 +66,21 @@ func main() {
 		log.Info().Msg("Created stream")
 	}
 
-	// publish
-	loops := 1
-	iterations := 6
-
-	for range loops {
-		var wg sync.WaitGroup
-		wg.Add(iterations)
-		for range iterations {
-			go func() {
-				publish(js)
-				wg.Done()
-			}()
+	// run modes
+	if len(os.Args) > 1 {
+		if os.Args[1] == "publisher" {
+			// publish
+			publish(js)
 		}
-		wg.Wait()
+
+		// qa
+		printStreamState(ctx, stream)
 	}
-
-	select {
-	case <-js.PublishAsyncComplete():
-		log.Info().Msg("published 6 messages")
-	case <-time.After(time.Second):
-		log.Fatal().Msg("publish took too long")
-	}
-
-	// qa
-	printStreamState(ctx, stream)
-
 }
 
 func printStreamState(ctx context.Context, stream jetstream.Stream) {
 	info, _ := stream.Info(ctx)
 	b, _ := json.MarshalIndent(info.State, "", " ")
-	log.Info().Msg("inspecting stream info")
+	log.Info().Msg("Inspecting stream info")
 	fmt.Println(string(b))
-}
-
-func publish(js jetstream.JetStream) {
-	_, err := js.PublishAsync("events.sample_input", []byte("hello world"))
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to publish async")
-	}
 }
