@@ -52,7 +52,7 @@ func main() {
 	cfg := jetstream.StreamConfig{
 		Name:     os.Getenv("NATS_STREAM_NAME"),
 		Subjects: []string{"events.>"},
-		MaxMsgs:  2000,
+		MaxBytes: 1000000000, // 1 GB
 	}
 
 	cfg.Storage = jetstream.FileStorage
@@ -70,7 +70,10 @@ func main() {
 	// run modes
 	if len(os.Args) > 1 {
 		if os.Args[1] == "publish" {
-			publish(js)
+			loops := 3 // 3 loops (12000 records), 1.21 secs, 6 loops: 2.13 secs
+			for range loops {
+				publish(js)
+			}
 		} else if os.Args[1] == "subscribe" {
 			cons, _ := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
 				Durable:   "CONS",
@@ -78,6 +81,7 @@ func main() {
 			})
 
 			// Receive messages continuously in a callback
+			messageCount := 0
 			iter, _ := cons.Messages()
 			for {
 				msg, err := iter.Next()
@@ -86,11 +90,16 @@ func main() {
 				}
 
 				// ack
-				log.Info().Msgf("Received a message: %s", string(msg.Data()))
 				err = msg.Ack()
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to ack message")
+				} else {
+					//log.Info().Msgf("Received a message: %s", string(msg.Data()))
+					messageCount++
 				}
+
+				fmt.Printf("\033[2K\r")
+				fmt.Printf("Received a message: %d", messageCount)
 			}
 			//iter.Stop()
 		}
