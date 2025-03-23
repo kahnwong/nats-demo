@@ -50,7 +50,7 @@ func main() {
 	}
 
 	cfg := jetstream.StreamConfig{
-		Name:     "EVENTS",
+		Name:     os.Getenv("NATS_STREAM_NAME"),
 		Subjects: []string{"events.>"},
 	}
 
@@ -68,9 +68,30 @@ func main() {
 
 	// run modes
 	if len(os.Args) > 1 {
-		if os.Args[1] == "publisher" {
-			// publish
+		if os.Args[1] == "publish" {
 			publish(js)
+		} else if os.Args[1] == "subscribe" {
+			cons, _ := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
+				Durable:   "CONS",
+				AckPolicy: jetstream.AckExplicitPolicy,
+			})
+
+			// Receive messages continuously in a callback
+			iter, _ := cons.Messages()
+			for {
+				msg, err := iter.Next()
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to read next message")
+				}
+
+				// ack
+				log.Info().Msgf("Received a message: %s", string(msg.Data()))
+				err = msg.Ack()
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to ack message")
+				}
+			}
+			//iter.Stop()
 		}
 
 		// qa
