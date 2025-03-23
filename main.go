@@ -52,6 +52,7 @@ func main() {
 	cfg := jetstream.StreamConfig{
 		Name:     os.Getenv("NATS_STREAM_NAME"),
 		Subjects: []string{"events.>"},
+		MaxMsgs:  2000,
 	}
 
 	cfg.Storage = jetstream.FileStorage
@@ -59,7 +60,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	stream, err := js.CreateStream(ctx, cfg)
+	stream, err := js.CreateOrUpdateStream(ctx, cfg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to create stream")
 	} else {

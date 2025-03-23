@@ -35,7 +35,7 @@ func publish(js jetstream.JetStream) {
 
 	select {
 	case <-js.PublishAsyncComplete():
-		log.Info().Msg("Published 6 messages")
+		log.Info().Msg("Published messages")
 	case <-time.After(time.Second):
 		log.Fatal().Msg("Publish took too long")
 	}
