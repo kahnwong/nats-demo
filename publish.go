@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 )
 
 func publish(js jetstream.JetStream) {
-	iterations := 4000 // max for async
+	iterations, _ := stringToFloat(os.Getenv("PUBLISH_BATCH_SIZE"))
 
 	var wg sync.WaitGroup
 	wg.Add(iterations)

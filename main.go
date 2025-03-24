@@ -70,7 +70,7 @@ func main() {
 	// run modes
 	if len(os.Args) > 1 {
 		if os.Args[1] == "publish" {
-			loops := 3 // 3 loops (12000 records), 1.21 secs, 6 loops: 2.13 secs
+			loops, _ := stringToFloat(os.Getenv("PUBLISH_LOOPS"))
 			for range loops {
 				publish(js)
 			}
